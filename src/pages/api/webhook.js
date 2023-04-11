@@ -20,9 +20,30 @@ export default async function handler(req, res) {
     const body = await bodyPromise;
 
     // Process the webhook payload here...
-    console.log(body?.entry[0].changes[0].value.contacts[0].profile);
-    console.log(body?.entry[0].changes[0].value.contacts[0].wa_id);
-    console.log(body?.entry[0].changes[0].value.messages[0].text.body);
+
+    //receiving messages
+    console.log("-------------------------------------------------");
+    console.dir(body.entry[0].changes[0].value.messages);
+    console.log("-------------------------------------------------");
+    console.log("Field->", body.entry[0].changes[0].field);
+    console.log("Message Id->", body?.entry[0].changes[0].value.messages[0].id);
+    console.log(
+      "Time Sent->",
+      Date(body?.entry[0].changes[0].value.messages[0].timestamp)
+    );
+    console.log("Type->", body?.entry[0].changes[0].value.messages[0].type);
+    console.log(
+      "Name->",
+      body?.entry[0].changes[0].value.contacts[0].profile.name
+    );
+    console.log(
+      "Phone Number->",
+      body?.entry[0].changes[0].value.contacts[0].wa_id
+    );
+    console.log(
+      "messageBody->",
+      body?.entry[0].changes[0].value.messages[0].text?.body
+    );
 
     // Respond with a 200 OK status code to acknowledge receipt of the webhook
     res.status(200).end();
