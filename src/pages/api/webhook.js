@@ -1,9 +1,29 @@
 import express from "express";
+import axios from "axios";
+
 export const config = {
   api: {
     bodyParser: false,
   },
 };
+// Function to fetch media from WhatsApp Cloud API
+async function fetchMedia(mediaId, accessToken) {
+  try {
+    const response = await axios.get(
+      `https://graph.facebook.com/v16.0/${mediaId}/`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    const mediaUrl = response.data?.url;
+    return mediaUrl;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
 export default async function handler(req, res) {
   // Parse the request body using express.json() middleware
   const bodyPromise = new Promise((resolve, reject) => {
@@ -23,7 +43,7 @@ export default async function handler(req, res) {
 
     //receiving messages
     console.log("-------------------------------------------------");
-    console.dir(body.entry[0].changes[0].value.messages);
+    console.dir(body.entry[0].changes[0].value.messages[0]);
     console.log("-------------------------------------------------");
     console.log("Field->", body.entry[0].changes[0].field);
     console.log("Message Id->", body?.entry[0].changes[0].value.messages[0].id);
@@ -44,6 +64,33 @@ export default async function handler(req, res) {
       "messageBody->",
       body?.entry[0].changes[0].value.messages[0].text?.body
     );
+    console.log(
+      "Media Id->",
+      body?.entry[0].changes[0].value.messages[0].image?.id
+    );
+
+    // Getting the media id for media messages
+    const mediaId = body?.entry[0].changes[0].value.messages[0].image?.id;
+    if (mediaId) {
+      const mediaUrl = await fetchMedia(mediaId, process.env.WHATSAPP_TOKEN);
+      console.log("Media URL -> ", mediaUrl);
+      //// Now you can use the media URL to download the media file
+      const config = {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+        },
+        responseType: "arraybuffer", // specify the response type as arraybuffer
+      };
+
+      try {
+        const response = await axios.get(mediaUrl, config);
+        const mediaData = response.data; // binary data of media
+        // // Now you can use the mediaData to display the media or save it in the database
+        console.log(mediaData);
+      } catch (error) {
+        // handle error
+      }
+    }
 
     // Respond with a 200 OK status code to acknowledge receipt of the webhook
     res.status(200).end();
