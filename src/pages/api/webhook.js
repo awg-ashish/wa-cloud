@@ -1,6 +1,14 @@
 import express from "express";
 import axios from "axios";
-
+import app from "../../../firebase";
+import {
+  addDoc,
+  collection,
+  getFirestore,
+  doc,
+  setDoc,
+} from "firebase/firestore";
+const db = getFirestore(app);
 export const config = {
   api: {
     bodyParser: false,
@@ -67,6 +75,17 @@ export default async function handler(req, res) {
       console.log(
         "---------------------------------------------------------------------------"
       );
+      //adding data to firebase
+      const messageRef = doc(
+        db,
+        "messages",
+        "ashish.blackhawk@gmail.com",
+        body.entry[0].changes[0].value.contacts[0].wa_id,
+        body.entry[0].changes[0].value.messages[0].id
+      );
+      setDoc(messageRef, body.entry[0].changes[0].value.messages[0].text, {
+        merge: true,
+      });
     }
 
     // 2. Media Messages

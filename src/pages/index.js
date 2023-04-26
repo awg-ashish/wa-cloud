@@ -13,6 +13,10 @@ export default function Home() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const sendMessage = async () => {
     try {
+      console.log(bearer);
+      console.log(`trying...`);
+      console.log(phoneNumber);
+      console.log(messageText);
       const response = await axios.post(
         "https://graph.facebook.com/v16.0/111369568531545/messages",
         {
