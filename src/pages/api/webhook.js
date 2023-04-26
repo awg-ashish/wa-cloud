@@ -75,7 +75,7 @@ export default async function handler(req, res) {
       console.log(
         "---------------------------------------------------------------------------"
       );
-      //adding data to firebase
+      //adding text data to firebase
       const messageRef = doc(
         db,
         "messages",
