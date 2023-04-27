@@ -50,12 +50,25 @@ export default async function handler(req, res) {
     // Process the webhook payload here...
 
     //response and status of sent messages
+    if (body.entry[0].changes[0].value.statuses) {
+      // const outgoingDataToFirestore = {
+      //   messageId: body.entry[0].changes[0].value.statuses[0].wa_id,
+      //   category: "OUTGOING",
+      //   type: body.entry[0].changes[0].value.messages[0].type,
+      //   status: "received",
+      //   statusUpdatedOn: body.entry[0].changes[0].value.messages[0].timestamp,
+      //   timestamp: body.entry[0].changes[0].value.messages[0].timestamp,
+      //   body: body.entry[0].changes[0].value.messages[0].text,
+      // };
 
-    //receiving messages
+      //receiving messages
 
-    // 1. Text Messages
+      // 1. Text Messages
 
-    console.log(body.entry[0].changes[0].value);
+      console.log(body.entry[0].changes[0].value);
+      console.log(body.entry[0].changes[0].value.statuses[0].conversation);
+      console.log(body.entry[0].changes[0].value.statuses[0].pricing);
+    }
     if (
       body.entry[0].changes[0].value.messages &&
       body.entry[0].changes[0].value.messages[0].type === "text"
@@ -75,6 +88,16 @@ export default async function handler(req, res) {
       console.log(
         "---------------------------------------------------------------------------"
       );
+      //preparing the data for adding in firebase
+      const incomingDataToFirestore = {
+        messageId: body.entry[0].changes[0].value.contacts[0].wa_id,
+        category: "INCOMING",
+        type: body.entry[0].changes[0].value.messages[0].type,
+        status: "received",
+        statusUpdatedOn: body.entry[0].changes[0].value.messages[0].timestamp,
+        timestamp: body.entry[0].changes[0].value.messages[0].timestamp,
+        body: body.entry[0].changes[0].value.messages[0].text,
+      };
       //adding text data to firebase
       const messageRef = doc(
         db,
@@ -83,7 +106,7 @@ export default async function handler(req, res) {
         body.entry[0].changes[0].value.contacts[0].wa_id,
         body.entry[0].changes[0].value.messages[0].id
       );
-      setDoc(messageRef, body.entry[0].changes[0].value.messages[0].text, {
+      setDoc(messageRef, incomingDataToFirestore, {
         merge: true,
       });
     }

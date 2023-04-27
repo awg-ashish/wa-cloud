@@ -4,6 +4,15 @@ import { Inter } from "next/font/google";
 import styles from "../styles/Home.module.css";
 import { useState } from "react";
 import axios from "axios";
+import app from "../../firebase";
+import {
+  addDoc,
+  collection,
+  getFirestore,
+  doc,
+  setDoc,
+} from "firebase/firestore";
+const db = getFirestore(app);
 
 const inter = Inter({ subsets: ["latin"] });
 
