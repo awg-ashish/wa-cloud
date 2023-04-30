@@ -1,10 +1,10 @@
-import { Inter } from "next/font/google";
 import { useEffect, useRef, useState } from "react";
+import styled from "styled-components";
 import axios from "axios";
 import app from "../../firebase";
 import {
-    collection,
     getFirestore,
+    collection,
     doc,
     setDoc,
     Timestamp,
@@ -12,9 +12,12 @@ import {
     orderBy,
     onSnapshot,
 } from "firebase/firestore";
+import Sidebar from "../components/Sidebar";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { getAuth } from "firebase/auth";
+import ChatScreen from "../components/ChatScreen";
+const auth = getAuth(app);
 const db = getFirestore(app);
-
-const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
     const bearer = process.env.NEXT_PUBLIC_WHATSAPP_TOKEN;
@@ -22,15 +25,17 @@ export default function Home() {
     const [phoneNumber, setPhoneNumber] = useState("");
     const [messages, setMessages] = useState([]);
     const endOfMessagesRef = useRef(null);
+    const [user] = useAuthState(auth);
 
     //Side effect for getting messages from database
     useEffect(() => {
         const messageRef = collection(
             db,
             "messages",
-            "ashish.blackhawk@gmail.com",
+            `${user?.email}`,
             `91${phoneNumber}`
         );
+
         const getMessagesQuery = query(messageRef, orderBy("timestamp"));
         const unsubscribe = onSnapshot(
             getMessagesQuery,
@@ -48,7 +53,7 @@ export default function Home() {
         return () => {
             unsubscribe();
         };
-    }, [phoneNumber]);
+    }, [phoneNumber, user]);
 
     //function for scrolling to bottom of screen
     const scrollToBottom = () => {
@@ -86,7 +91,7 @@ export default function Home() {
                 }
             );
             console.log(response.data);
-
+            //prepare data for entry in firestore
             const outgoingDataToFirestore = {
                 messageId: response.data.messages[0].id,
                 category: "OUTGOING",
@@ -96,16 +101,32 @@ export default function Home() {
                 timestamp: `${Timestamp.now().seconds}`,
                 body: `${messageText}`,
             };
-            const messageRef = doc(
-                db,
-                "messages",
-                "ashish.blackhawk@gmail.com",
-                `91${phoneNumber}`,
-                response.data.messages[0].id
-            );
-            await setDoc(messageRef, outgoingDataToFirestore, {
-                merge: true,
-            });
+
+            if (user) {
+                //add data to firestore
+                const messageRef = doc(
+                    db,
+                    "messages",
+                    `${user.email}`,
+                    `91${phoneNumber}`,
+                    response.data.messages[0].id
+                );
+                await setDoc(messageRef, outgoingDataToFirestore, {
+                    merge: true,
+                });
+                //add the contact to chat list
+                const chatRef = doc(
+                    db,
+                    "messages",
+                    `${user.email}`,
+                    "allChats",
+                    `91${phoneNumber}`
+                );
+                await setDoc(chatRef, {
+                    contact: `91${phoneNumber}`,
+                    timestamp: `${Timestamp.now().seconds}`,
+                });
+            }
             setMessageText("");
             scrollToBottom();
         } catch (error) {
@@ -114,7 +135,12 @@ export default function Home() {
     };
 
     return (
-        <div>
+        <>
+            <Container>
+                <Sidebar />
+                <ChatScreen />
+            </Container>
+
             <input
                 type="text"
                 placeholder="Enter Phone Number..."
@@ -137,6 +163,12 @@ export default function Home() {
                     <div ref={endOfMessagesRef}>----------</div>
                 </>
             )}
-        </div>
+        </>
     );
 }
+const Container = styled.div`
+    display: flex;
+    width: 95vw;
+    height: 95vh;
+    border: 2px solid black;
+`;

@@ -129,6 +129,7 @@ export default async function handler(req, res) {
             //preparing the data for adding in firebase
             const incomingDataToFirestore = {
                 messageId: body.entry[0].changes[0].value.contacts[0].wa_id,
+                waName: body.entry[0].changes[0].value.contacts[0].profile.name,
                 category: "INCOMING",
                 type: body.entry[0].changes[0].value.messages[0].type,
                 status: "received",
@@ -149,6 +150,18 @@ export default async function handler(req, res) {
                 merge: true,
             });
         }
+        //add contact to chat list.
+        const chatRef = doc(
+            db,
+            "messages",
+            `ashish.blackhawk@gmail.com`,
+            "allChats",
+            body.entry[0].changes[0].value.contacts[0].wa_id
+        );
+        await setDoc(chatRef, {
+            contact: body.entry[0].changes[0].value.contacts[0].wa_id,
+            timestamp: body.entry[0].changes[0].value.messages[0].timestamp,
+        });
 
         // 2. Media Messages
 
